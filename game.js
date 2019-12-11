@@ -109,14 +109,28 @@ class Game{
 
     update(){
         this.gameObjectList.forEach(gameObj => {
-            gameObj.lastPosition.x = gameObj.position.x
-            gameObj.lastPosition.y = gameObj.position.y
+            gameObj.lastPosition.x = gameObj.position.x;
+            gameObj.lastPosition.y = gameObj.position.y;
             gameObj.position.x += gameObj.velocity.x;
             gameObj.position.y += gameObj.velocity.y;
         })
-        this.gameObjectList.forEach(gameObj =>{
-            
-        })
+
+        const pairs = [];
+        for(let i=0; i < this.gameObjectList.length; i++){
+            for(let j=i+1; j<this.gameObjectList.length; j++){
+                if(isOverlap(this.gameObjectList[i], this.gameObjectList[j])){
+                    this.gameObjectList[i].position.x = this.gameObjectList[i].lastPosition.x;
+                    this.gameObjectList[i].position.y = this.gameObjectList[i].lastPosition.y;
+                    this.gameObjectList[j].position.x = this.gameObjectList[j].lastPosition.x;
+                    this.gameObjectList[j].position.y = this.gameObjectList[j].lastPosition.y;
+                }
+            }
+        }
+        pairs.forEach(pair =>{
+            if(isOverlap(pair[0], pair[1])){
+                console.log(pair);
+            }
+        });
     }
 
     addGameObject(gameObj){
@@ -180,25 +194,23 @@ const player3ControlDefine = {
 
 const game = new Game(this.document);
 
-const player = new Player(100, 100);
-const player2 = new Player(200, 200);
-const player3 = new Player(300,300);
-player.addControl(player1ControlDefine);
-player2.addControl(player2ControlDefine);
-player3.addControl(player3ControlDefine);
-
 const background = new GameObject(0,0,canvas.width, canvas.height, "black");
 const wall1 = new GameObject(0, 0, canvas.width, 10, "green");
 const wall2 = new GameObject(0, 490, canvas.width, 10, "green");
 const wall3 = new GameObject(0, 0, 10, canvas.height, "green");
 const wall4 = new GameObject(490, 0, 10, canvas.height, "green");
 let gameobj = new GameObject(80,40,30,10,"red");
-let gameobj2 = new GameObject(100,30,40,60,"blue");
-const gameObjList = [player, player2, player3, wall1, wall2, wall3, wall4, gameobj, gameobj2];
+let gameobj2 = new GameObject(120,30,40,60,"blue");
+const gameObjList = [wall1, wall2, gameobj, gameobj2];
 
+const player = new Player(100, 100);
+const player2 = new Player(200, 200);
+const player3 = new Player(300,300);
+player.addControl(player1ControlDefine);
+player2.addControl(player2ControlDefine);
+player3.addControl(player3ControlDefine);
 game.addPlayer(player);
 game.addPlayer(player2);
-game.addPlayer(player3);
 game.addBackground(background);
 game.addGameObjectList(gameObjList);
 start(game);
