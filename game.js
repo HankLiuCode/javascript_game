@@ -6,6 +6,67 @@ class Vector{
     }
 }
 
+/*
+Oberserver 
+input event to queue
+gameobject is moving -> isoverlap 
+
+
+
+SPEC
+The Game World consists of many GameObjects, InputManager takes user input delivers input to subscriber
+
++start(){
+    const gameworld = new GameWorld
+
+    loop(){
+        gameworld.updateAll()
+        gameworld.renderAll()
+    }
+}
+
+GameWorld
+    GameObjects:    list
+
+    +add()
+    +updateAll()
+    +renderAll()
+
+GameObjectFactory
+    +makeObject()
+
+GameObject
+    transform:  Transform
+        xyPosition:     Vector
+        weight,height:  Vector
+        rotation:       Vector
+    velocity:       Vector
+
+    sprite:         string(color)
+    tag:            string
+    layer:          int
+    id:             int
+
+    +update()
+
+Player(Subscriber, GameObject)
+    inputmanager:   InputManager
+    
+    +update(){
+
+    }
+    +notify()
+
+PhysicsManager
+    
+
+InputManager
+    keyboardChannelSubscribers: list
+    mouseChannelSubscribers:    list
+
+    +notifyAll():  notifies subscribers about events
+*/
+
 class GameObject{
     constructor(x, y, width, height, color, layer=null, tag=null){
         this.lastPosition = new Vector(x,y);
@@ -115,6 +176,8 @@ class GameObjectManager{
         this.gameObjectList.splice(index, 1);
     }
 }
+
+
 
 class Game{
     constructor(document){
