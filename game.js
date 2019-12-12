@@ -7,12 +7,13 @@ class Vector{
 }
 
 class GameObject{
-    constructor(x, y, width, height, color){
+    constructor(x, y, width, height, color, tag){
         this.lastPosition = new Vector(x,y);
         this.position = new Vector(x,y);
         this.velocity = new Vector(0, 0);
         this.size = new Vector(width, height);
-        this.color = color;
+        this.color = color; 
+        this.tag = tag
     }
     get left(){
         return this.position.x;
@@ -34,7 +35,7 @@ class GameObject{
 
 class Player extends GameObject{
     constructor(x, y){
-        super(x,y,10,10, "white");
+        super(x,y,10,10, "white", "player");
         this.controlUp = null;
         this.controlDown = null;
         this.controlLeft = null;
@@ -78,67 +79,12 @@ class Player extends GameObject{
         }
     }
 }
-
-
-function isOverlap(gameObject1, gameObject2){
-    let leftRightOverlap = gameObject1.right > gameObject2.left && gameObject1.left < gameObject2.right;
-    let topBottomOverlap = gameObject1.top < gameObject2.bottom && gameObject1.bottom > gameObject2.top;
-    if (leftRightOverlap && topBottomOverlap){
-        return true;
-    }
-    return false;
-}
-
-class Game{
-    constructor(document){
-        this.context = document.getElementById('canvas').getContext('2d');
-        this.backgroundList = [];
+class GameObjectManager{
+    constructor(){
         this.gameObjectList = [];
     }
-
-    render(){
-        this.backgroundList.forEach(gameObj => {
-            this.context.fillStyle = gameObj.color;
-            this.context.fillRect(gameObj.position.x, gameObj.position.y, gameObj.size.x, gameObj.size.y);
-        });
-        this.gameObjectList.forEach(gameObj => {
-            this.context.fillStyle = gameObj.color;
-            this.context.fillRect(gameObj.position.x, gameObj.position.y, gameObj.size.x, gameObj.size.y);
-        });
-    }
-
-    update(){
-        this.gameObjectList.forEach(gameObj => {
-            gameObj.lastPosition.x = gameObj.position.x;
-            gameObj.lastPosition.y = gameObj.position.y;
-            gameObj.position.x += gameObj.velocity.x;
-            gameObj.position.y += gameObj.velocity.y;
-        })
-
-        const pairs = [];
-        for(let i=0; i < this.gameObjectList.length; i++){
-            for(let j=i+1; j<this.gameObjectList.length; j++){
-                if(isOverlap(this.gameObjectList[i], this.gameObjectList[j])){
-                    this.gameObjectList[i].position.x = this.gameObjectList[i].lastPosition.x;
-                    this.gameObjectList[i].position.y = this.gameObjectList[i].lastPosition.y;
-                    this.gameObjectList[j].position.x = this.gameObjectList[j].lastPosition.x;
-                    this.gameObjectList[j].position.y = this.gameObjectList[j].lastPosition.y;
-                }
-            }
-        }
-        pairs.forEach(pair =>{
-            if(isOverlap(pair[0], pair[1])){
-                console.log(pair);
-            }
-        });
-    }
-
     addGameObject(gameObj){
         this.gameObjectList.push(gameObj);
-    }
-
-    addBackground(background){
-        this.backgroundList.push(background);
     }
 
     addGameObjectList(gameObjList){
@@ -146,21 +92,77 @@ class Game{
             this.gameObjectList.push(gameObj);
         });
     }
+    destroyGameObject(gameObj){
 
-    addBackgroundList(backgroundList){
-        backgroundList.forEach(background =>{
-            this.backgroundList.push(background);
+    }
+}
+class Game{
+    constructor(document){
+        this.context = document.getElementById('canvas').getContext('2d');
+        this.gameObjectManager = new GameObjectManager();
+    }
+
+    render(){
+        this.gameObjectManager.gameObjectList.forEach(gameObj => {
+            this.context.fillStyle = gameObj.color;
+            this.context.fillRect(gameObj.position.x, gameObj.position.y, gameObj.size.x, gameObj.size.y);
+        });
+    }
+
+    update(){
+        this.gameObjectManager.gameObjectList.forEach(gameObj => {
+            gameObj.lastPosition.x = gameObj.position.x;
+            gameObj.lastPosition.y = gameObj.position.y;
+            gameObj.position.x += gameObj.velocity.x;
+            gameObj.position.y += gameObj.velocity.y;
+        })
+        for(let i=0; i < this.gameObjectManager.gameObjectList.length; i++){
+            for(let j=i+1; j<this.gameObjectManager.gameObjectList.length; j++){
+                if(this.isOverlap(this.gameObjectManager.gameObjectList[i], this.gameObjectManager.gameObjectList[j])){
+                    this.interact(this.gameObjectManager.gameObjectList[i], this.gameObjectManager.gameObjectList[j])
+                }
+            }
+        }
+    }
+
+    addGameObjectList(gameObjList){
+        gameObjList.forEach(gameObj =>{
+            this.gameObjectManager.addGameObject(gameObj);
         });
     }
 
     addPlayer(player){
-        this.gameObjectList.push(player);
+        this.gameObjectManager.addGameObject(player);
         document.addEventListener('keydown',function(event){
             player.execute(event.code, event.type);
         });
         document.addEventListener('keyup',function(event){
             player.execute(event.code, event.type);
         });
+    }
+
+    isOverlap(gameObject1, gameObject2){
+        let leftRightOverlap = gameObject1.right > gameObject2.left && gameObject1.left < gameObject2.right;
+        let topBottomOverlap = gameObject1.top < gameObject2.bottom && gameObject1.bottom > gameObject2.top;
+        if (leftRightOverlap && topBottomOverlap){
+            return true;
+        }
+        return false;
+    }
+
+    interact(gameObject1, gameObject2){
+        if(gameObject1.tag == 'player' && gameObject2.tag == 'player'){
+            console.log(gameObject1);
+        }
+        else if(gameObject1.tag == 'background' || gameObject2.tag == 'background'){
+            
+        }
+        else{
+            gameObject1.position.x = gameObject1.lastPosition.x;
+            gameObject1.position.y = gameObject1.lastPosition.y;
+            gameObject2.position.x = gameObject2.lastPosition.x;
+            gameObject2.position.y = gameObject2.lastPosition.y;
+        }
     }
 }
 
@@ -194,23 +196,31 @@ const player3ControlDefine = {
 
 const game = new Game(this.document);
 
-const background = new GameObject(0,0,canvas.width, canvas.height, "black");
-const wall1 = new GameObject(0, 0, canvas.width, 10, "green");
-const wall2 = new GameObject(0, 490, canvas.width, 10, "green");
-const wall3 = new GameObject(0, 0, 10, canvas.height, "green");
-const wall4 = new GameObject(490, 0, 10, canvas.height, "green");
-let gameobj = new GameObject(80,40,30,10,"red");
-let gameobj2 = new GameObject(120,30,40,60,"blue");
-const gameObjList = [wall1, wall2, gameobj, gameobj2];
+const background = new GameObject(0,0,canvas.width, canvas.height, "black", "background");
+const border1 = new GameObject(0, 0, canvas.width, 10, "green", "wall");
+const border2 = new GameObject(0, 490, canvas.width, 10, "green", "wall");
+const border3 = new GameObject(0, 0, 10, canvas.height, "green", "wall");
+const border4 = new GameObject(490, 0, 10, canvas.height, "green", "wall");
 
-const player = new Player(100, 100);
-const player2 = new Player(200, 200);
+let wall1 = new GameObject(100,50,10,50,"blue", "wall");
+let wall2 = new GameObject(200,50,10,50,"blue", "wall");
+let wall3 = new GameObject(300,50,10,50,"blue", "wall");
+let wall4 = new GameObject(400,50,10,50,"blue", "wall");
+let wall5 = new GameObject(150,150,10,50,"blue", "wall");
+let wall6 = new GameObject(250,150,10,50,"blue", "wall");
+let wall7 = new GameObject(350,150,10,50,"blue", "wall");
+let wall8 = new GameObject(450,150,10,50,"blue", "wall");
+
+const gameObjList = [background, border1, border2, border3, border4, wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8];
+
+const player = new Player(150, 100);
+const player2 = new Player(250, 200);
 const player3 = new Player(300,300);
 player.addControl(player1ControlDefine);
 player2.addControl(player2ControlDefine);
 player3.addControl(player3ControlDefine);
+game.addGameObjectList(gameObjList);
 game.addPlayer(player);
 game.addPlayer(player2);
-game.addBackground(background);
-game.addGameObjectList(gameObjList);
+game.addPlayer(player3);
 start(game);
