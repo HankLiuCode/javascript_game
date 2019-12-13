@@ -68,14 +68,13 @@ InputManager
 */
 
 class GameObject{
-    constructor(x, y, width, height, color, layer=null, tag=null){
+    constructor(x, y, width, height, color, tag = null){
         this.lastPosition = new Vector(x,y);
         this.position = new Vector(x,y);
         this.velocity = new Vector(0, 0);
         this.size = new Vector(width, height);
         this.color = color; 
         this.tag = tag;
-        this.layer = layer;
         this.id = null;
     }
     get left(){
@@ -104,108 +103,128 @@ class GameObject{
 class Player extends GameObject{
     constructor(x, y, color, layer, tag){
         super(x,y,10,10, color, layer, tag);
-        this.controlUp = null;
-        this.controlDown = null;
-        this.controlLeft = null;
-        this.controlRight = null;
+        this.controlDefine = null;
         this.speed = 3;
     }
     addControl(controlDefine){
-        this.controlUp = controlDefine['up'];
-        this.controlDown = controlDefine['down'];
-        this.controlLeft = controlDefine['left'];
-        this.controlRight = controlDefine['right'];
+        this.controlDefine = controlDefine;
     }
-    execute(keycode, type){
+    movement(keycode, type){
         if(type == 'keydown'){
-            if(keycode == this.controlUp){
+            if(keycode == this.controlDefine['up']){
                 this.setVelocityY(-this.speed);
             }
-            if(keycode == this.controlDown){
+            if(keycode == this.controlDefine['down']){
                 this.setVelocityY(this.speed);
             }
-            if(keycode == this.controlLeft){
+            if(keycode == this.controlDefine['left']){
                 this.setVelocityX(-this.speed);
             }
-            if(keycode == this.controlRight){
+            if(keycode == this.controlDefine['right']){
                 this.setVelocityX(this.speed);
             }
         }
         if(type == 'keyup'){
-            if(keycode == this.controlUp){
+            if(keycode == this.controlDefine['up']){
                 this.setVelocityY(0);
             }
-            if(keycode == this.controlDown){
+            if(keycode == this.controlDefine['down']){
                 this.setVelocityY(0);
             }
-            if(keycode == this.controlLeft){
+            if(keycode == this.controlDefine['left']){
                 this.setVelocityX(0);
             }
-            if(keycode == this.controlRight){
+            if(keycode == this.controlDefine['right']){
                 this.setVelocityX(0);
             }
         }
     }
+
+    execute(keycode, type){
+        this.movement(keycode, type);
+    }
 }
-class GameObjectManager{
+class GameObjectList{
     constructor(){
+        this.length = 0
         this.usedId = new Set();
-        this.gameObjectList = [];
+        this.list = [];
     }
 
-    add(gameObj){
+    push(gameObj){
         let id = Math.floor(Math.random()*90000) + 10000;
         while(this.usedId.has(id)){
             id = Math.floor(Math.random()*90000) + 10000;
         }
         this.usedId.add(id);
         gameObj.setId(id);
-        this.gameObjectList.push(gameObj);
+        this.list.push(gameObj);
+        this.length += 1;
     }
 
-    addList(gameObjList){
+    pushAll(gameObjList){
+        gameObjList.forEach(gameObj =>{
+            this.list.push(gameObj);
+            this.length += 1;
+        });
+    }
+
+    pop(gameObjToDestroy){
+        let index = this.list.findIndex(gameObj => gameObj.id == gameObjToDestroy.id);
+        console.log(index);
+        console.log(gameObjToDestroy);
+        this.list.splice(index, 1);
+        this.length -= 1;
+    }
+
+    forEach(callbackFunc){
+        this.list.forEach(gameObj =>{
+            callbackFunc(gameObj);
+        })
+    }
+    index(i){
+        return this.list[i]
+    }
+}
+
+class Game{
+    constructor(document, renderDefine){
+        this.context = document.getElementById('canvas').getContext('2d');
+        this.gameObjectList = new GameObjectList();
+        this.renderDefine = renderDefine;
+    }
+
+    addAll(gameObjList){
         gameObjList.forEach(gameObj =>{
             this.gameObjectList.push(gameObj);
         });
     }
 
-    destroy(gameObjToDestroy){
-        let index = this.gameObjectList.findIndex(gameObj => gameObj.id == gameObjToDestroy.id);
-        console.log(index);
-        console.log(gameObjToDestroy);
-        this.gameObjectList.splice(index, 1);
-    }
-}
-
-
-
-class Game{
-    constructor(document){
-        this.context = document.getElementById('canvas').getContext('2d');
-        this.gameObjectManager = new GameObjectManager();
-        this.renderList = [];
+    addPlayer(player){
+        this.gameObjectList.push(player);
+        document.addEventListener('keydown',function(event){
+            player.execute(event.code, event.type);
+        });
+        document.addEventListener('keyup',function(event){
+            player.execute(event.code, event.type);
+        });
     }
 
     render(){
+        let toRender = []
         let layers = {
-            0:[],
-            1:[],
-            2:[],
-            3:[],
-            4:[],
-            5:[],
-            6:[],
-            7:[],
-            8:[]
+            0:[],1:[],2:[],3:[],4:[],5:[],6:[],7:[],8:[],9:[],10:[]
         };
-        this.gameObjectManager.gameObjectList.forEach(gameObj => {
-            layers[gameObj.layer].push(gameObj);
+        this.gameObjectList.forEach(gameObj => {
+            if (this.renderDefine[gameObj.tag]==undefined){
+                console.log(gameObj);
+            }
+            layers[0].push(gameObj);
         });
         for(let i=0; i < Object.keys(layers).length; i++){
-            this.renderList.push(layers[i]);
+            toRender.push(layers[i]);
         }
-
-        this.renderList.forEach(layers =>{
+        toRender.forEach(layers =>{
             layers.forEach(gameObj=>{
                 this.context.fillStyle = gameObj.color;
                 this.context.fillRect(gameObj.position.x, gameObj.position.y, gameObj.size.x, gameObj.size.y);
@@ -214,35 +233,19 @@ class Game{
     }
 
     update(){
-        this.gameObjectManager.gameObjectList.forEach(gameObj => {
+        this.gameObjectList.forEach(gameObj => {
             gameObj.lastPosition.x = gameObj.position.x;
             gameObj.lastPosition.y = gameObj.position.y;
             gameObj.position.x += gameObj.velocity.x;
             gameObj.position.y += gameObj.velocity.y;
         })
-        for(let i=0; i < this.gameObjectManager.gameObjectList.length; i++){
-            for(let j=i+1; j<this.gameObjectManager.gameObjectList.length; j++){
-                if(this.isOverlap(this.gameObjectManager.gameObjectList[i], this.gameObjectManager.gameObjectList[j])){
-                    this.interact(this.gameObjectManager.gameObjectList[i], this.gameObjectManager.gameObjectList[j])
+        for(let i=0; i < this.gameObjectList.length; i++){
+            for(let j=i+1; j<this.gameObjectList.length; j++){
+                if(this.isOverlap(this.gameObjectList.index(i), this.gameObjectList.index(j))){
+                    this.interact(this.gameObjectList.index(i), this.gameObjectList.index(j))
                 }
             }
         }
-    }
-
-    addGameObjectList(gameObjList){
-        gameObjList.forEach(gameObj =>{
-            this.gameObjectManager.add(gameObj);
-        });
-    }
-
-    addPlayer(player){
-        this.gameObjectManager.add(player);
-        document.addEventListener('keydown',function(event){
-            player.execute(event.code, event.type);
-        });
-        document.addEventListener('keyup',function(event){
-            player.execute(event.code, event.type);
-        });
     }
 
     isOverlap(gameObject1, gameObject2){
@@ -255,21 +258,58 @@ class Game{
     }
 
     interact(gameObject1, gameObject2){
-        if(gameObject1.tag == 'player' && gameObject2.tag == 'tagger'){
-            this.gameObjectManager.destroy(gameObject1);
-        }
-        else if(gameObject1.tag == 'tagger' && gameObject2.tag == 'player'){
-            this.gameObjectManager.destroy(gameObject2);
-        }
-        else if(gameObject1.tag == 'background' || gameObject2.tag == 'background'){
+        let gameObjectPair = new Pair(gameObject1, gameObject2)
+        if(gameObjectPair.matchTag('background', 'background')){
             //do nothing
         }
-        else{
-            gameObject1.position.x = gameObject1.lastPosition.x;
-            gameObject1.position.y = gameObject1.lastPosition.y;
-            gameObject2.position.x = gameObject2.lastPosition.x;
-            gameObject2.position.y = gameObject2.lastPosition.y;
+        else if(gameObjectPair.matchTag('player', 'tagger')){
+            let playerObj = gameObjectPair.objectWithTag('player');
+            this.gameObjectList.pop(playerObj);
         }
+        else if(gameObjectPair.matchTag('player', 'pickup')){
+            let pickupObj = gameObjectPair.objectWithTag('pickup');
+            let playerObj = gameObjectPair.objectWithTag('player');
+            this.gameObjectList.pop(pickupObj);
+            playerObj.color ='red';
+            playerObj.tag = 'tagger';
+        }
+        else if(gameObjectPair.matchTag('player', 'wall')){
+            let playerObj = gameObjectPair.objectWithTag('player');
+            playerObj.position.x = playerObj.lastPosition.x;
+            playerObj.position.y = playerObj.lastPosition.y;
+        }
+        else if(gameObjectPair.matchTag('tagger', 'wall')){
+            let playerObj = gameObjectPair.objectWithTag('tagger');
+            playerObj.position.x = playerObj.lastPosition.x;
+            playerObj.position.y = playerObj.lastPosition.y;
+        }
+    }
+}
+class Pair{
+    constructor(gameObject1, gameObject2){
+        this.gameObject1 = gameObject1;
+        this.gameObject2 = gameObject2;
+    }
+    matchTag(tag1, tag2){
+        if(this.gameObject1.tag==tag1 && this.gameObject2.tag == tag2){
+           return true;
+        }
+        if(this.gameObject2.tag==tag1 && this.gameObject1.tag == tag2){
+            return true;
+        }
+        return false;
+    }
+    objectWithTag(tag){
+        if(this.gameObject1.tag==tag && this.gameObject2.tag==tag){
+            return [this.gameObject1, this.gameObject2]
+        }
+        if(this.gameObject1.tag==tag){
+            return this.gameObject1;
+        }
+        if(this.gameObject2.tag==tag){
+            return this.gameObject2;
+        }
+        return null;
     }
 }
 
@@ -295,28 +335,40 @@ const player2ControlDefine = {
     'left':'KeyA',
     'right':'KeyD',
 }
+const renderDefine = {
+    null:0,
+    "background":1,
+    "wall":2,
+    "pickup":3,
+    "player":4,
+    "tagger":4,
+}
+const game = new Game(this.document, renderDefine);
+
+const background = new GameObject(0,0,canvas.width, canvas.height, "black","background");
+const border1 = new GameObject(0, 0, canvas.width, 10, "green", "wall");
+const border2 = new GameObject(0, 490, canvas.width, 10, "green", "wall");
+const border3 = new GameObject(0, 0, 10, canvas.height, "green", "wall");
+const border4 = new GameObject(490, 0, 10, canvas.height, "green", "wall");
+
+let wall1 = new GameObject(100,50,10,50,"blue", "wall");
+let wall2 = new GameObject(200,50,10,50,"blue", "wall");
+let wall3 = new GameObject(300,50,10,50,"blue", "wall");
+let wall4 = new GameObject(400,50,10,50,"blue", "wall");
+
+let pickup = new GameObject(350,350,5,5,"yellow", "pickup");
+const setups = [background, border1, border2, border3, border4]
+const obstacles = [wall1, wall2, wall3, wall4]
+const pickups = [pickup];
+game.addAll(setups);
+game.addAll(obstacles);
+game.addAll(pickups);
 
 
-const game = new Game(this.document);
-
-const background = new GameObject(0,0,canvas.width, canvas.height, "black",0, "background");
-const border1 = new GameObject(0, 0, canvas.width, 10, "green",1, "wall");
-const border2 = new GameObject(0, 490, canvas.width, 10, "green",1, "wall");
-const border3 = new GameObject(0, 0, 10, canvas.height, "green",1, "wall");
-const border4 = new GameObject(490, 0, 10, canvas.height, "green",1, "wall");
-
-let wall1 = new GameObject(100,50,10,50,"blue", 1, "wall");
-let wall2 = new GameObject(200,50,10,50,"blue", 1, "wall");
-let wall3 = new GameObject(300,50,10,50,"blue", 1, "wall");
-let wall4 = new GameObject(400,50,10,50,"blue", 1, "wall");
-
-const gameObjList = [background, border1, border2, border3, border4, wall1, wall2, wall3, wall4];
-
-const player = new Player(200, 200, "white", 2, "player");
-const player2 = new Player(300, 300, "red", 2, "tagger");
+const player = new Player(200, 200, "white", "player");
+const player2 = new Player(300, 300, "white", "player");
 player.addControl(player1ControlDefine);
 player2.addControl(player2ControlDefine);
 game.addPlayer(player);
 game.addPlayer(player2);
-game.addGameObjectList(gameObjList);
 start(game);
