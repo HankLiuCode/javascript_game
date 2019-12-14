@@ -51,15 +51,13 @@ class Player extends GameObject{
         this.speed = 3;
         this.pickUpTime = null;
     }
-    setState(state, time){
+    setState(state){
         if(state == 'player'){
             this.color = 'blue';
             this.tag = 'player';
-            this.pickupTime = null;
         }else if(state == 'tagger'){
             this.color = 'red';
             this.tag = 'tagger';
-            this.pickUpTime = time;
         }
     }
     addControl(controlDefine){
@@ -103,13 +101,6 @@ class Player extends GameObject{
         this.lastPosition.y = this.position.y;
         this.position.x += this.velocity.x;
         this.position.y += this.velocity.y;
-        if(this.pickupTime == null){
-            this.pickupTime = time;
-        }
-        if(time - this.pickUpTime > 4000){
-            this.setState('player');
-        }
-
     }
 }
 
@@ -117,6 +108,7 @@ class Pickup extends GameObject{
     constructor(x, y){
         super(x, y, 5, 5, 'yellow','pickup');
     }
+
 }
 
 class GameObjectList{
@@ -126,7 +118,6 @@ class GameObjectList{
         this.list = [];
     }
     exist(gameObj){
-        
         let index = this.list.findIndex(gameObj => gameObj.id == gameObjToDestroy.id);
         if(index == -1){
             return false;
@@ -168,39 +159,11 @@ class GameObjectList{
     }
 }
 
-class Manager extends GameObject{
-    constructor(){
-        super(0,0,0,0, "black", 'manager');
-        this.lastSpawnTime = null;
-    }
-    update(gameObjectList, time){
-        console.log(gameObjectList);
-    }
-}
-class PickupManager extends Manager{
-    constructor(){
-        super();
-        this.pickup = null;
-        this.lastSpawnTime == null;
-    }
-    update(gameObjectList, time){
-        if(this.pickup == null){
-            let x=Math.floor(Math.random()*400) + 100;
-            let y=Math.floor(Math.random()*400) + 100;
-            this.pickup = new Pickup(x, y);
-        }
-    }
-}
-
 class Game{
     constructor(document, renderDefine){
         this.context = document.getElementById('canvas').getContext('2d');
         this.gameObjectList = new GameObjectList();
-        this.gameManagerList = new GameObjectList();
         this.renderDefine = renderDefine;
-    }
-    addGameManager(manager){
-        this.gameManagerList.push(manager);
     }
     add(gameObj){
         this.gameObjectList.push(gameObj);
@@ -246,9 +209,6 @@ class Game{
         this.gameObjectList.forEach(gameObj => {
             gameObj.update(time);
         })
-        this.gameManagerList.forEach(manager =>{
-            manager.update(this.gameObjectList, time);
-        });
         for(let i=0; i < this.gameObjectList.length; i++){
             for(let j=i+1; j<this.gameObjectList.length; j++){
                 if(this.isOverlap(this.gameObjectList.index(i), this.gameObjectList.index(j))){
@@ -280,7 +240,7 @@ class Game{
             let pickupObj = gameObjectPair.objectWithTag('pickup');
             let playerObj = gameObjectPair.objectWithTag('player');
             this.gameObjectList.pop(pickupObj);
-            playerObj.setState('tagger', time);
+            playerObj.setState('tagger');
         }
         else if(gameObjectPair.matchTag('player', 'wall')){
             let playerObj = gameObjectPair.objectWithTag('player');
@@ -293,6 +253,9 @@ class Game{
             playerObj.position.y = playerObj.lastPosition.y;
         }
     }
+}
+class GameEvent{
+    //todo
 }
 
 class Pair{
@@ -359,9 +322,6 @@ const game = new Game(document, renderDefine);
 const gameWidth = 520;
 const gameHeight = 520;
 
-const pickupManager = new PickupManager();
-game.addGameManager(pickupManager);
-
 const background = new GameObject(0,0,gameWidth, gameHeight, "black","background");
 const border1 = new GameObject(0, 0, gameWidth, 10, "green", "wall");
 const border2 = new GameObject(0, gameWidth-10, gameWidth, 10, "green", "wall");
@@ -381,6 +341,8 @@ let wall7 = new GameObject(300,300,10,100,"green", "wall");
 let wall8 = new GameObject(400,300,10,100,"green", "wall");
 const obstacles2 = [wall5, wall6, wall7, wall8]
 
+let pickup = new Pickup(100,100);
+game.add(pickup);
 game.addAll(setups);
 game.addAll(obstacles);
 game.addAll(obstacles2);
