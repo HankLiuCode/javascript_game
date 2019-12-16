@@ -108,7 +108,27 @@ class Pickup extends GameObject{
     constructor(x, y){
         super(x, y, 5, 5, 'yellow','pickup');
     }
-
+}
+class TimeCounter extends GameObject{
+    constructor(gameObject, timeCountDown){
+        super(0,0,10,10,'black', 'timecounter');
+        this.gameObject = gameObject;
+        this.timeCountDown = timeCountDown;
+    }
+    update(time){
+        this.timeCountDown -= 1
+    }
+    timeUp(){
+        if(this.timeCountDown < 0){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+    getGameObject(){
+        return this.gameObject;
+    }
 }
 
 class GameObjectList{
@@ -232,6 +252,14 @@ class Game{
         if(gameObjectPair.matchTag('background', 'background')){
             //do nothing
         }
+        else if(gameObjectPair.matchTag('background', 'timecounter')){
+            let timecounter = gameObjectPair.objectWithTag('timecounter');
+            if(timecounter.timeUp()){
+                let tagger = timecounter.getGameObject();
+                tagger.setState('player');
+                this.gameObjectList.pop(timecounter);
+            }
+        }
         else if(gameObjectPair.matchTag('player', 'tagger')){
             let playerObj = gameObjectPair.objectWithTag('player');
             this.gameObjectList.pop(playerObj);
@@ -241,6 +269,8 @@ class Game{
             let playerObj = gameObjectPair.objectWithTag('player');
             this.gameObjectList.pop(pickupObj);
             playerObj.setState('tagger');
+            let timeCounter = new TimeCounter(playerObj, 500);
+            this.gameObjectList.push(timeCounter);
         }
         else if(gameObjectPair.matchTag('player', 'wall')){
             let playerObj = gameObjectPair.objectWithTag('player');
@@ -253,9 +283,6 @@ class Game{
             playerObj.position.y = playerObj.lastPosition.y;
         }
     }
-}
-class GameEvent{
-    //todo
 }
 
 class Pair{
@@ -309,12 +336,12 @@ const player2ControlDefine = {
 }
 const renderDefine = {
     null:0,
-    "background":1,
-    "wall":2,
-    "pickup":3,
-    "player":4,
-    "tagger":4,
-    "manager":5,
+    "timecounter":1,
+    "background":2,
+    "wall":3,
+    "pickup":4,
+    "player":5,
+    "tagger":5,
 }
 
 
@@ -341,8 +368,6 @@ let wall7 = new GameObject(300,300,10,100,"green", "wall");
 let wall8 = new GameObject(400,300,10,100,"green", "wall");
 const obstacles2 = [wall5, wall6, wall7, wall8]
 
-let pickup = new Pickup(100,100);
-game.add(pickup);
 game.addAll(setups);
 game.addAll(obstacles);
 game.addAll(obstacles2);
