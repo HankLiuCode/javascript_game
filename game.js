@@ -43,7 +43,33 @@ class GameObject{
         this.position.y += this.velocity.y;
     }
 }
-
+class Pair{
+    constructor(gameObject1, gameObject2){
+        this.gameObject1 = gameObject1;
+        this.gameObject2 = gameObject2;
+    }
+    matchTag(tag1, tag2){
+        if(this.gameObject1.tag==tag1 && this.gameObject2.tag == tag2){
+           return true;
+        }
+        if(this.gameObject2.tag==tag1 && this.gameObject1.tag == tag2){
+            return true;
+        }
+        return false;
+    }
+    objectWithTag(tag){
+        if(this.gameObject1.tag==tag && this.gameObject2.tag==tag){
+            return [this.gameObject1, this.gameObject2]
+        }
+        if(this.gameObject1.tag==tag){
+            return this.gameObject1;
+        }
+        if(this.gameObject2.tag==tag){
+            return this.gameObject2;
+        }
+        return null;
+    }
+}
 class Player extends GameObject{
     constructor(x, y, color, layer, tag){
         super(x,y,10,10, color, layer, tag);
@@ -103,20 +129,31 @@ class Player extends GameObject{
         this.position.y += this.velocity.y;
     }
 }
-
 class Pickup extends GameObject{
     constructor(x, y){
         super(x, y, 5, 5, 'yellow','pickup');
     }
 }
+class PickupFactory{
+    produce(){
+        let x_pos = Math.floor(Math.random()*400) + 100;
+        let y_pos = Math.floor(Math.random()*400) + 100;
+        return new Pickup(x_pos,y_pos);
+    }
+}
 class TimeCounter extends GameObject{
-    constructor(gameObject, timeCountDown){
-        super(0,0,10,10,'black', 'timecounter');
+    constructor(gameObject, callBackAction, timeCountDown){
+        super(0,520,100,100,'white', 'timecounter');
         this.gameObject = gameObject;
+        this.fullTime = timeCountDown;
         this.timeCountDown = timeCountDown;
+        this.callBackAction = callBackAction;
     }
     update(time){
         this.timeCountDown -= 1
+    }
+    reset(){
+        this.timeCountDown = this.fullTime;
     }
     timeUp(){
         if(this.timeCountDown < 0){
@@ -126,23 +163,15 @@ class TimeCounter extends GameObject{
             return false;
         }
     }
-    getGameObject(){
-        return this.gameObject;
+    action(){
+        this.callBackAction(this.gameObject);
     }
 }
-
 class GameObjectList{
     constructor(){
         this.length = 0
         this.usedId = new Set();
         this.list = [];
-    }
-    exist(gameObj){
-        let index = this.list.findIndex(gameObj => gameObj.id == gameObjToDestroy.id);
-        if(index == -1){
-            return false;
-        }
-        return true;
     }
 
     push(gameObj){
@@ -227,7 +256,10 @@ class Game{
 
     update(time){
         this.gameObjectList.forEach(gameObj => {
-            gameObj.update(time);
+            gameObj.update(time); 
+            if(gameObj.tag == 'timecounter'){
+                console.log(gameObj);
+            }
         })
         for(let i=0; i < this.gameObjectList.length; i++){
             for(let j=i+1; j<this.gameObjectList.length; j++){
@@ -252,11 +284,10 @@ class Game{
         if(gameObjectPair.matchTag('background', 'background')){
             //do nothing
         }
-        else if(gameObjectPair.matchTag('background', 'timecounter')){
+        else if(gameObjectPair.matchTag('ui', 'timecounter')){
             let timecounter = gameObjectPair.objectWithTag('timecounter');
             if(timecounter.timeUp()){
-                let tagger = timecounter.getGameObject();
-                tagger.setState('player');
+                timecounter.action();
                 this.gameObjectList.pop(timecounter);
             }
         }
@@ -269,8 +300,13 @@ class Game{
             let playerObj = gameObjectPair.objectWithTag('player');
             this.gameObjectList.pop(pickupObj);
             playerObj.setState('tagger');
-            let timeCounter = new TimeCounter(playerObj, 500);
+            const timeCounter = new TimeCounter(playerObj,gameObj=>{gameObj.setState('player')}, 300);
             this.gameObjectList.push(timeCounter);
+
+            let x_pos = Math.floor(Math.random()*400) + 100;
+            let y_pos = Math.floor(Math.random()*400) + 100;
+            let newPickup = new Pickup(x_pos,y_pos);
+            this.gameObjectList.push(newPickup);
         }
         else if(gameObjectPair.matchTag('player', 'wall')){
             let playerObj = gameObjectPair.objectWithTag('player');
@@ -284,35 +320,6 @@ class Game{
         }
     }
 }
-
-class Pair{
-    constructor(gameObject1, gameObject2){
-        this.gameObject1 = gameObject1;
-        this.gameObject2 = gameObject2;
-    }
-    matchTag(tag1, tag2){
-        if(this.gameObject1.tag==tag1 && this.gameObject2.tag == tag2){
-           return true;
-        }
-        if(this.gameObject2.tag==tag1 && this.gameObject1.tag == tag2){
-            return true;
-        }
-        return false;
-    }
-    objectWithTag(tag){
-        if(this.gameObject1.tag==tag && this.gameObject2.tag==tag){
-            return [this.gameObject1, this.gameObject2]
-        }
-        if(this.gameObject1.tag==tag){
-            return this.gameObject1;
-        }
-        if(this.gameObject2.tag==tag){
-            return this.gameObject2;
-        }
-        return null;
-    }
-}
-
 function start(game){
     function frame(time){
         game.update(time);
@@ -342,6 +349,13 @@ const renderDefine = {
     "pickup":4,
     "player":5,
     "tagger":5,
+    "ui":6,
+}
+const player3ControlDefine = {
+    'up': 'Numpad8',
+    'down':'Numpad2',
+    'left':'Numpad4',
+    'right':'Numpad6',
 }
 
 
@@ -368,15 +382,25 @@ let wall7 = new GameObject(300,300,10,100,"green", "wall");
 let wall8 = new GameObject(400,300,10,100,"green", "wall");
 const obstacles2 = [wall5, wall6, wall7, wall8]
 
+const uiBackground = new GameObject(0,gameHeight,gameWidth,100,"black","ui");
+const timer = new GameObject(0,gameHeight,100,100,"yellow","ui");
+game.add(uiBackground);
+game.add(timer);
+const pickup = new Pickup(250,250);
+
+game.add(pickup);
 game.addAll(setups);
 game.addAll(obstacles);
 game.addAll(obstacles2);
 const player = new Player(10, 10, "blue", "player");
-const player2 = new Player(480, 480, "blue", "player");
+const player2 = new Player(500, 500, "blue", "player");
+const player3 = new Player(500, 10, "blue", 'player');
 player.addControl(player1ControlDefine);
 player2.addControl(player2ControlDefine);
+player3.addControl(player3ControlDefine);
 game.addControllable(player);
 game.addControllable(player2);
+//game.addControllable(player3);
 game.add(background);
 start(game);
 
