@@ -383,17 +383,15 @@ let wall8 = new GameObject(400,300,10,100,"green", "wall");
 const obstacles2 = [wall5, wall6, wall7, wall8]
 
 const uiBackground = new GameObject(0,gameHeight,gameWidth,100,"black","ui");
-const timer = new GameObject(0,gameHeight,100,100,"yellow","ui");
 game.add(uiBackground);
-game.add(timer);
 const pickup = new Pickup(250,250);
 
 game.add(pickup);
 game.addAll(setups);
 game.addAll(obstacles);
 game.addAll(obstacles2);
-const player = new Player(10, 10, "blue", "player");
-const player2 = new Player(500, 500, "blue", "player");
+const player = new Player(20, 20, "blue", "player");
+const player2 = new Player(480, 480, "blue", "player");
 const player3 = new Player(500, 10, "blue", 'player');
 player.addControl(player1ControlDefine);
 player2.addControl(player2ControlDefine);
