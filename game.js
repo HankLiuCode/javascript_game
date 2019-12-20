@@ -318,6 +318,14 @@ class Game{
             playerObj.position.x = playerObj.lastPosition.x;
             playerObj.position.y = playerObj.lastPosition.y;
         }
+        else if(gameObjectPair.matchTag('pickup', 'wall')){
+            let pickObj = gameObjectPair.objectWithTag('pickup');
+            this.gameObjectList.pop(pickObj);
+            let x_pos = Math.floor(Math.random()*400) + 100;
+            let y_pos = Math.floor(Math.random()*400) + 100;
+            let newPickup = new Pickup(x_pos,y_pos);
+            this.gameObjectList.push(newPickup);
+        }
     }
 }
 function start(game){
@@ -384,7 +392,10 @@ const obstacles2 = [wall5, wall6, wall7, wall8]
 
 const uiBackground = new GameObject(0,gameHeight,gameWidth,100,"black","ui");
 game.add(uiBackground);
-const pickup = new Pickup(250,250);
+
+let x_pos = Math.floor(Math.random()*400) + 100;
+let y_pos = Math.floor(Math.random()*400) + 100;
+const pickup = new Pickup(x_pos, y_pos);
 
 game.add(pickup);
 game.addAll(setups);
