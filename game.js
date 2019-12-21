@@ -257,9 +257,6 @@ class Game{
     update(time){
         this.gameObjectList.forEach(gameObj => {
             gameObj.update(time); 
-            if(gameObj.tag == 'timecounter'){
-                console.log(gameObj);
-            }
         })
         for(let i=0; i < this.gameObjectList.length; i++){
             for(let j=i+1; j<this.gameObjectList.length; j++){
@@ -349,6 +346,18 @@ const player2ControlDefine = {
     'left':'ArrowLeft',
     'right':'ArrowRight',
 }
+const player3ControlDefine = {
+    'up': 'Numpad8',
+    'down':'Numpad2',
+    'left':'Numpad4',
+    'right':'Numpad6',
+}
+const player4ControlDefine = {
+    'up': 'KeyU',
+    'down':'KeyJ',
+    'left':'KeyH',
+    'right':'KeyK',
+}
 const renderDefine = {
     null:0,
     "timecounter":1,
@@ -358,12 +367,6 @@ const renderDefine = {
     "player":5,
     "tagger":5,
     "ui":6,
-}
-const player3ControlDefine = {
-    'up': 'Numpad8',
-    'down':'Numpad2',
-    'left':'Numpad4',
-    'right':'Numpad6',
 }
 
 
@@ -403,17 +406,18 @@ game.addAll(obstacles);
 game.addAll(obstacles2);
 const player = new Player(20, 20, "blue", "player");
 const player2 = new Player(480, 480, "blue", "player");
-const player3 = new Player(500, 10, "blue", 'player');
+const player3 = new Player(480, 20, "blue", 'player');
+const player4 = new Player(20, 480, "blue", 'player');
 player.addControl(player1ControlDefine);
 player2.addControl(player2ControlDefine);
 player3.addControl(player3ControlDefine);
+player4.addControl(player4ControlDefine);
 game.addControllable(player);
 game.addControllable(player2);
-//game.addControllable(player3);
+game.addControllable(player3);
+game.addControllable(player4);
 game.add(background);
 start(game);
-
-
 
 
 
